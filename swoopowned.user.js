@@ -5,7 +5,7 @@
 // @include        http://www.swoopo.com/auction/*
 // ==/UserScript==
 //
-// Copyright (c) 2009 joshua stein <jcs@jcs.org>
+// Copyright (c) 2009, 2010 joshua stein <jcs@jcs.org>
 // 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -52,20 +52,34 @@ wrapper.style.padding = "3px";
 wrapper.style.fontSize = "9pt";
 document.body.appendChild(wrapper);
 
-/* add a toggle whether to log data */
+var do_bid_w = document.createElement("div");
+do_bid_w.style.cssFloat = "right";
+wrapper.appendChild(do_bid_w);
+
+/* add a toggle on the left whether to log data */
 var do_log = document.createElement("input");
 do_log.type = "checkbox";
 do_log.id = "do_log";
 do_log.checked = true;
 wrapper.appendChild(do_log);
 
-/* add a toggle whether to place bids */
+var do_log_l = document.createElement("label");
+do_log_l.htmlFor = "do_log";
+do_log_l.style.styleFloat = "left";
+do_log_l.innerHTML = "enable data logging";
+wrapper.appendChild(do_log_l);
+
+/* add a toggle on the right whether to place bids */
+var do_bid_l = document.createElement("label");
+do_bid_l.htmlFor = "do_bid";
+do_bid_l.innerHTML = "enable bidding";
+do_bid_l.style.color = "darkred";
+do_bid_w.appendChild(do_bid_l);
+
 var do_bid = document.createElement("input");
 do_bid.type = "checkbox";
 do_bid.id = "do_bid";
-do_bid.style.marginLeft = "300px";
-do_bid.style.backgroundColor = "red";
-wrapper.appendChild(do_bid);
+do_bid_w.appendChild(do_bid);
 
 /* the div where we will append data to */
 var l = document.createElement("div");
@@ -82,13 +96,15 @@ for (x = 0; x < as.length; x++)
 		bidfunc = unescape(as[x].href.replace(/^javascript:/, ""));
 
 var auction_id;
-var broked = false;
+var broken = false;
 if (bidfunc) {
 	m = bidfunc.match(/^place_bid\('(\d+)'/);
 	auction_id = m[1];
 } else {
-	broked = true;
+	broken = true;
+	do_log.checked = false;
 	do_log.disabled = true;
+	do_bid.disabled = true;
 }
 
 /* setup some globals we'll use while looping */
@@ -108,7 +124,7 @@ function looper() {
 
 	if (do_log.checked) {
 		if (p != last_price) {
-			hist = document.getElementById("ghistorie_tbl");
+			hist = document.getElementById("stats_test");
 			tds = hist.getElementsByTagName("td");
 
 			start_recording = false;
@@ -188,5 +204,10 @@ function store_data(data) {
 }
 
 /* if we found all the elements we were looking for, start watching data */
-if (!broked)
+if (broken)
+	l.innerHTML = "<br />" +
+		"required elements not found, either you are not logged in or " +
+		"swoopo may have changed their site html.<br /><br />" +
+		"disabling logging and bidding functions.";
+else
 	window.setTimeout(looper, 500);
